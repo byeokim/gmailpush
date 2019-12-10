@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "joshpeng.sublime-babel-vscode",
+    "esbenp.prettier-vscode",
+    "EditorConfig.editorconfig"
+  ]
+}

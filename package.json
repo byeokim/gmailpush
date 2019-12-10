@@ -1,0 +1,49 @@
+{
+  "name": "gmailpush",
+  "version": "1.0.0",
+  "description": "Gmail API push notification handler",
+  "keywords": [
+    "gmail",
+    "api",
+    "push",
+    "notification"
+  ],
+  "homepage": "https://github.com/byeokim/gmailpush",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/byeokim/gmailpush.git"
+  },
+  "main": "index.js",
+  "bugs": "https://github.com/byeokim/gmailpush/issues",
+  "author": "Byeonggi Kim",
+  "license": "MIT",
+  "dependencies": {
+    "googleapis": "^45.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.7.1",
+    "eslint-config-prettier": "^6.7.0",
+    "husky": "^3.1.0",
+    "lint-staged": "^9.4.3",
+    "prettier": "^1.19.1"
+  },
+  "scripts": {
+    "prettier": "prettier \"**/*.js\" --check",
+    "lint": "eslint ."
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier --write",
+      "git add",
+      "eslint"
+    ]
+  },
+  "engines": {
+    "node": ">=10"
+  }
+}
