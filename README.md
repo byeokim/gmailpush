@@ -85,7 +85,7 @@ app.post(
         token
       })
       .then((messages) => {
-         console.log(messages);
+        console.log(messages);
       })
       .catch((err) => {
         console.log(err);
