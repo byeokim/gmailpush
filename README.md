@@ -6,11 +6,11 @@ Gmailpush is Node.js library for handling Gmail API push notifications using [Go
 
 ## Features
 
-- Fields parsed from original message's `payload`, e.g. from, to, subject, body
-- Filter by `historyTypes`, e.g. `messageAdded`, `labelRemoved`
-- Filter by `labelIds`, e.g. `INBOX`, `UNREAD`
+- Fields such as from, to, subject and body parsed from original message's `payload`
+- Filter by types of history, e.g. `messageAdded`, `labelRemoved`
+- Filter by label ids, e.g. `INBOX`, `UNREAD`
 - Automatic renewal of [mailbox watch request](https://developers.google.com/gmail/api/guides/push#renewing_mailbox_watch)
-- Uses JSON file to store each Gmail user's previous `historyId` and watch request `expiration`
+- Uses JSON file to store each user's Gmail API history id and watch request expiration
 
 ## Prerequisites
 
@@ -38,7 +38,9 @@ $ npm install gmailpush
 $ yarn add gmailpush
 ```
 
-## Usage
+## Example
+
+### Request
 
 ```js
 const express = require('express');
@@ -46,6 +48,7 @@ const Gmailpush = require('gmailpush');
 
 const app = express();
 
+// Initialize with OAuth2 config and Pub/Sub topic
 const gmailpush = new Gmailpush({
   clientId: '12345abcdefg.apps.googleusercontent.com',
   clientSecret: 'hijklMNopqrstU12vxY345ZA',
@@ -66,7 +69,8 @@ const users = [
 ];
 
 app.post(
-  'GMAIL_PUBSUB_PUSH_ENDPOINT',
+  // Use URL set as Pub/Sub Subscription endpoint
+  '/pubsub-push-endpoint',
   // Parse JSON request payload
   express.json(),
   (req, res) => {
@@ -96,6 +100,46 @@ app.post(
 app.listen(3000, () => {
   console.log('Server listening on port 3000...');
 });
+```
+
+### Response
+
+```js
+[
+  {
+    id: 'fedcba9876543210',
+    threadId: 'fedcba9876543210',
+    labelIds: [ 'CATEGORY_PERSONAL', 'INBOX', 'UNREAD', 'IMPORTANT' ],
+    snippet: 'this is body',
+    historyId: '987654321',
+    historyType: 'labelAdded',
+    internalDate: '1543210123451',
+    date: 'Tue, 1 Jan 2019 00:00:00 +0000',
+    from: { name: 'user', address: 'user@example.com' },
+    to: [ { name: 'user1', address: 'user1@gmail.com' } ],
+    subject: 'this is subject',
+    bodyText: 'this is body\r\n',
+    bodyHtml: '<div dir="ltr">this is body</div>\r\n',
+    attachments: [
+      {
+        mimeType: 'image/jpeg',
+        filename: 'example.jpg',
+        attachmentId: 'abcdef0123456789',
+        size: 2,
+        data: <Buffer ff ff ff ff>
+      }
+    ],
+    payload: {
+      partId: '',
+      mimeType: 'multipart/alternative',
+      filename: '',
+      headers: [Array],
+      body: [Object],
+      parts: [Array]
+    },
+    sizeEstimate: 4321
+  }
+]
 ```
 
 ## Initialization
@@ -135,11 +179,11 @@ File path for storing `emailAddress`, `prevHistoryId` and `watchExpiration`.
 
 - `emailAddress`: Email address of a user for whom Gmail push notification messages are sent.
 
-- `prevHistoryId`: Gmail API's push notification messages are not *real* messages but contain `historyId` which is the latest `historyId` as of the time they are sent. To retrieve real messages, one needs to request [history](https://developers.google.com/gmail/api/v1/reference/users/history/list) of changes to the user's mailbox since a certain `historyId`. But `historyId` in the push notification message cannot be used for the certain `historyId` because it is the latest one after which no changes have been made. So Gmailpush stores `historyId` from the push notification message for later use when next push notification message is received.
+- `prevHistoryId`: Gmail API's push notification messages are not *real* messages but contain `historyId` which is the latest `historyId` as of the time they are sent. To retrieve real messages, one needs to request for [history](https://developers.google.com/gmail/api/v1/reference/users/history/list) of changes to the user's mailbox since a certain `historyId`. But `historyId` in the push notification message cannot be used for the certain `historyId` because it is the latest one after which no changes have been made. So Gmailpush stores `historyId` from the push notification message for later use when next push notification message is received.
 
 - `watchExpiration`: Google Cloud Pub/Sub API requires calling `watch()` [at least every 7 days](https://developers.google.com/gmail/api/guides/push#renewing_mailbox_watch). Otherwise push notification will be stopped. So Gmailpush stores watch expiration and calls `watch()` one day before expiration.
 
-Default is `'gmailpush_history.json'`. Example `gmailpush_history.json` is as follows:
+Default is `'gmailpush_history.json'`. And example content of `gmailpush_history.json` is as follows:
 
 ```js
 [
@@ -164,7 +208,7 @@ Gets Gmail messages which have caused change to [history](https://developers.goo
 
 Messages can be filtered by options. For example, `messages` in the following usage will be an array of messages that have `INBOX` label in their `labelIds` and have added `IMPORTANT` label to their `labelIds`.
 
-Return value of this method includes attachment data as `Buffer`. Alternatively you can use `getMessagesWithoutAttachment()` which doesn't include attachment data.
+Return value of this method includes attachment data as Buffer. Alternatively you can use `getMessagesWithoutAttachment()` which doesn't include attachment data.
 
 Gmail API sends push notifications for many reasons of which some are not related to four history types, i.e. `messageAdded`, `messageDeleted`, `labelAdded` and `labelRemoved`. So this method will return an empty array if an element of history array doesn't have `messagesAdded`, `messagesDeleted`, `labelsAdded` or `labelsRemoved` as its property.
 
@@ -254,46 +298,6 @@ Specifies which label ids should *not* be included in `labelIds` of messages thi
 #### Return `array of objects || []`
 
 An array of message objects with attachment data included. If there is no message objects that satisfy criteria set by options, an empty array will be returned.
-
-##### Example return
-
-```js
-[
-  {
-    id: 'fedcba9876543210',
-    threadId: 'fedcba9876543210',
-    labelIds: [ 'CATEGORY_PERSONAL', 'INBOX', 'UNREAD', 'IMPORTANT' ],
-    snippet: 'this is body',
-    historyId: '987654321',
-    internalDate: '1543210123451',
-    payload: {
-      partId: '',
-      mimeType: 'multipart/alternative',
-      filename: '',
-      headers: [Array],
-      body: [Object],
-      parts: [Array]
-    },
-    sizeEstimate: 4321,
-    historyType: 'labelAdded',
-    from: { name: 'user', address: 'user@example.com' },
-    to: [ { name: 'user1', address: 'user1@gmail.com' } ],
-    subject: 'this is subject',
-    date: 'Tue, 1 Jan 2019 00:00:00 +0000',
-    attachments: [
-      {
-        mimeType: 'image/jpeg',
-        filename: 'example.jpg',
-        attachmentId: 'abcdef0123456789',
-        size: 2,
-        data: <Buffer ff ff ff ff>
-      }
-    ],
-    bodyText: 'this is body\r\n',
-    bodyHtml: '<div dir="ltr">this is body</div>\r\n'
-  }
-]
-```
 
 ### getMessagesWithoutAttachment(options)
 
@@ -398,6 +402,12 @@ Same as that of `getMessages()`.
 #### Return `string`
 
 Email address.
+
+##### Example return
+
+```js
+'user1@gmail.com'
+```
 
 ### getLabels(notification, token)
 
