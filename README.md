@@ -113,7 +113,7 @@ app.listen(3000, () => {
     snippet: 'this is body',
     historyId: '987654321',
     historyType: 'labelAdded',
-    internalDate: '1543210123451',
+    internalDate: '1546300800000',
     date: 'Tue, 1 Jan 2019 00:00:00 +0000',
     from: { name: 'user', address: 'user@example.com' },
     to: [ { name: 'user1', address: 'user1@gmail.com' } ],
