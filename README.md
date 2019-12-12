@@ -179,7 +179,7 @@ File path for storing `emailAddress`, `prevHistoryId` and `watchExpiration`.
 
 - `emailAddress`: Email address of a user for whom Gmail push notification messages are sent.
 
-- `prevHistoryId`: Gmail API's push notification messages are not *real* messages but contain `historyId` which is the latest `historyId` as of the time they are sent. To retrieve real messages, one needs to request for [history](https://developers.google.com/gmail/api/v1/reference/users/history/list) of changes to the user's mailbox since a certain `historyId`. But `historyId` in the push notification message cannot be used for the certain `historyId` because it is the latest one after which no changes have been made. So Gmailpush stores `historyId` from the push notification message for later use when next push notification message is received.
+- `prevHistoryId`: Gmail API's push notification messages are not *real* messages but contain `historyId` which is the latest history id as of the time they are sent. To retrieve real messages, one needs to request for [history](https://developers.google.com/gmail/api/v1/reference/users/history/list) of changes to the user's mailbox since a certain history id. But `historyId` in the push notification message cannot be used for that certain history id because it is the latest one after which no changes have been made. So Gmailpush stores `historyId` from the push notification message for later use when next push notification message is received. Similarly the first push notification since installing Gmailpush could not be turned into messages but an empty array because the history id used for the first `getMessages()` is the latest one.
 
 - `watchExpiration`: Google Cloud Pub/Sub API requires calling `watch()` [at least every 7 days](https://developers.google.com/gmail/api/guides/push#renewing_mailbox_watch). Otherwise push notification will be stopped. So Gmailpush stores watch expiration and calls `watch()` one day before expiration.
 
@@ -210,7 +210,20 @@ Messages can be filtered by options. For example, `messages` in the following us
 
 Return value of this method includes attachment data as Buffer. Alternatively you can use `getMessagesWithoutAttachment()` which doesn't include attachment data.
 
-Gmail API sends push notifications for many reasons of which some are not related to four history types, i.e. `messageAdded`, `messageDeleted`, `labelAdded` and `labelRemoved`. So this method will return an empty array if an element of history array doesn't have `messagesAdded`, `messagesDeleted`, `labelsAdded` or `labelsRemoved` as its property.
+Gmail API sends push notifications for many reasons of which some are not related to the four history types, i.e. `messageAdded`, `messageDeleted`, `labelAdded` and `labelRemoved`. In those cases this method will return an empty array.
+
+For `messageDeleted` type of history, because messages would have been deleted before requested, return value for the messages would have no material properties and look like this:
+
+```js
+{
+  id: 'fedcba9876543210',
+  historyType: 'messageDeleted',
+  notFound: true, // Indicates that Gmail API has returned "Not Found"
+  attachments: [] // Exists only for internal purpose
+}
+```
+
+When a Gmail user is composing a new message, every change the user has made to the draft (even typing a single character) causes two push notifications, i.e. `messageDeleted` type for deletion of the last draft and `messageAdded` type for addition of current draft.
 
 #### Usage
 
@@ -289,11 +302,12 @@ Used with `labelRemoved` history type to specify which removed label ids to moni
 
 ##### withLabelIds `array of strings`
 
-Specifies which label ids should be included in `labelIds` of messages this method returns. Elements will be OR-ed. If not provided, Gmailpush won't filter by `withLabelIds`. User-generated labels have label ids which don't match their label names. To get label id for user-generated label, use `getLabels()`. `withLabelIds` and `withoutLabelIds` cannot contain the same label id.
+Specifies which label ids should be included in `labelIds` of messages this method returns. Elements will be OR-ed. If not provided, Gmailpush won't filter by `withLabelIds`. `withLabelIds` would filter out any messages with `messageDeleted` type of history because they don't have `labelIds`. User-generated labels have label ids which don't match their label names. To get label id for user-generated label, use `getLabels()`. `withLabelIds` and `withoutLabelIds` cannot contain the same label id.
+
 
 ##### withoutLabelIds `array of strings`
 
-Specifies which label ids should *not* be included in `labelIds` of messages this method returns. Elements will be OR-ed. If not provided, Gmailpush won't filter by `withoutLabelIds`. User-generated labels have label ids which don't match their label names. To get label id for user-generated label, use `getLabels()`. `withLabelIds` and `withoutLabelIds` cannot contain the same label id.
+Specifies which label ids should *not* be included in `labelIds` of messages this method returns. Elements will be OR-ed. If not provided, Gmailpush won't filter by `withoutLabelIds`. `withoutLabelIds` would not filter out messages with `messageDeleted` type of history because they don't have `labelIds` to be filtered. User-generated labels have label ids which don't match their label names. To get label id for user-generated label, use `getLabels()`. `withLabelIds` and `withoutLabelIds` cannot contain the same label id.
 
 #### Return `array of objects || []`
 
@@ -392,7 +406,7 @@ Gets Email address from a push notification.
 #### Usage
 
 ```js
-const email = await gmailpush.getEmailAddress(req.body);
+const email = gmailpush.getEmailAddress(req.body);
 ```
 
 #### notification (required) `object`
