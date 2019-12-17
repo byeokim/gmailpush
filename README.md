@@ -208,21 +208,6 @@ Gets Gmail messages which have caused change to [history](https://developers.goo
 
 Messages can be filtered by options. For example, `messages` in the following usage will be an array of messages that have `INBOX` label in their `labelIds` and have added `IMPORTANT` label to their `labelIds`.
 
-Return value of this method includes attachment data as Buffer. Alternatively you can use `getMessagesWithoutAttachment()` which doesn't include attachment data.
-
-Gmail API sends push notifications for many reasons of which some are not related to the four history types, i.e. `messageAdded`, `messageDeleted`, `labelAdded` and `labelRemoved`. In those cases this method will return an empty array.
-
-For `messageDeleted` type of history, because messages would have been deleted before requested, return value for the messages would have no material properties and look like this:
-
-```js
-{
-  id: 'fedcba9876543210',
-  historyType: 'messageDeleted',
-  notFound: true, // Indicates that Gmail API has returned "Not Found"
-  attachments: [] // Exists only for internal purpose
-}
-```
-
 When a Gmail user is composing a new message, every change the user has made to the draft (even typing a single character) causes two push notifications, i.e. `messageDeleted` type for deletion of the last draft and `messageAdded` type for addition of current draft.
 
 #### Usage
@@ -311,7 +296,31 @@ Specifies which label ids should *not* be included in `labelIds` of messages thi
 
 #### Return `array of objects || []`
 
-An array of message objects with attachment data included. If there is no message objects that satisfy criteria set by options, an empty array will be returned.
+An array of message objects. If there is no message objects that satisfy criteria set by options, an empty array will be returned. Also, Gmail API sends push notifications for many reasons of which some are not related to the four history types, i.e. `messageAdded`, `messageDeleted`, `labelAdded` and `labelRemoved`. In those cases this method will return an empty array.
+
+If the messages have attachments, data of the attachments is automatically fetched and appended as [Buffer](https://nodejs.org/api/buffer.html) instance. Alternatively you can use `getMessagesWithoutAttachment()` which returns messages without attachment data.
+
+For `messageDeleted` type of history, because messages would have been deleted before requested, return value for those messages would have no material properties and look like this:
+
+```js
+{
+  id: 'fedcba9876543210',
+  historyType: 'messageDeleted',
+  notFound: true, // Indicates that Gmail API has returned "Not Found"
+  attachments: [] // Exists only for internal purpose
+}
+```
+
+In message object, `cc`, `bcc`, `bodyText` and `bodyHtml` are only present when original message has them.
+
+If parsing email fields like `from`, `to`, `cc` and `bcc` has failed, raw values will be returned:
+
+```js
+{
+  name: 'user1 <user1@gmail.com>',  // should have been 'user1'
+  address: 'user1 <user1@gmail.com>'// should have been 'user1@gmail.com'
+}
+```
 
 ### getMessagesWithoutAttachment(options)
 
