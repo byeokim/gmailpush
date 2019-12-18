@@ -183,7 +183,9 @@ File path for storing `emailAddress`, `prevHistoryId` and `watchExpiration`.
 
 - `watchExpiration`: Google Cloud Pub/Sub API requires calling `watch()` [at least every 7 days](https://developers.google.com/gmail/api/guides/push#renewing_mailbox_watch). Otherwise push notification will be stopped. So Gmailpush stores watch expiration and calls `watch()` one day before expiration.
 
-Default is `'gmailpush_history.json'`. And example content of `gmailpush_history.json` is as follows:
+Methods like `getMessages()`, `getMessagesWithoutAttachment()` and `getNewMessage` will automatically create a file using `prevHistoryIdFilePath` if the file doesn't exist.
+
+Default is `'gmailpush_history.json'` and its content would be like:
 
 ```js
 [
@@ -207,6 +209,8 @@ Default is `'gmailpush_history.json'`. And example content of `gmailpush_history
 Gets Gmail messages which have caused change to [history](https://developers.google.com/gmail/api/v1/reference/users/history/list) since `prevHistoryId` which is the `historyId` as of the previous push notification and is stored in `prevHistoryIdFilePath`.
 
 Messages can be filtered by options. For example, `messages` in the following usage will be an array of messages that have `INBOX` label in their `labelIds` and have added `IMPORTANT` label to their `labelIds`.
+
+The first call of this method for a user will result in an empty array as returned value and store `prevHistoryId` in `gmailpush_history.json`. (also create the file if not exists)
 
 When a Gmail user is composing a new message, every change the user has made to the draft (even typing a single character) causes two push notifications, i.e. `messageDeleted` type for deletion of the last draft and `messageAdded` type for addition of current draft.
 
@@ -296,7 +300,11 @@ Specifies which label ids should *not* be included in `labelIds` of messages thi
 
 #### Return `array of objects || []`
 
-An array of message objects. If there is no message objects that satisfy criteria set by options, an empty array will be returned. Also, Gmail API sends push notifications for many reasons of which some are not related to the four history types, i.e. `messageAdded`, `messageDeleted`, `labelAdded` and `labelRemoved`. In those cases this method will return an empty array.
+An array of message objects. If there is no message objects that satisfy criteria set by options, an empty array will be returned.
+
+Gmail API sends push notifications for many reasons of which some are not related to the four history types, i.e. `messageAdded`, `messageDeleted`, `labelAdded` and `labelRemoved`. In those cases this method will return an empty array.
+
+If `prevHistoryId` for a user doesn't exist in `gmailpush_history.json`, calling this method for the user will result in an empty array.
 
 If the messages have attachments, data of the attachments is automatically fetched and appended as [Buffer](https://nodejs.org/api/buffer.html) instance. Alternatively you can use `getMessagesWithoutAttachment()` which returns messages without attachment data.
 
@@ -306,21 +314,38 @@ For `messageDeleted` type of history, because messages would have been deleted b
 {
   id: 'fedcba9876543210',
   historyType: 'messageDeleted',
-  notFound: true, // Indicates that Gmail API has returned "Not Found"
+  notFound: true, // Indicates that Gmail API has returned "Not Found" error
   attachments: [] // Exists only for internal purpose
 }
 ```
 
-In message object, `cc`, `bcc`, `bodyText` and `bodyHtml` are only present when original message has them.
+In message object, `from`, `to`, `cc`, `bcc`, `subject`, `date`, `bodyText` and `bodyHtml` are present only when original message has them.
 
-If parsing email fields like `from`, `to`, `cc` and `bcc` has failed, raw values will be returned:
+If parsing originator/destination headers like From, To, Cc and Bcc has failed, raw values will be assigned to `from`, `to`, `cc` and `bcc`, respectively. For example, value of To header in the `message.payload.headers` seems to be truncated if it has more than a certain number (about 9,868) of characters. In that case, the last one in the list of recipient Email addresses might look like the following and not be parsed:
 
 ```js
-{
-  name: 'user1 <user1@gmail.com>',  // should have been 'user1'
-  address: 'user1 <user1@gmail.com>'// should have been 'user1@gmail.com'
-}
+// message.payload.headers:
+[
+  {
+    name: 'To',
+    value: 'user1@example.com <user1@example.com>, user2@'
+  }
+]
+
+// message.to:
+[
+  {
+    name: 'user1@example.com',
+    address: 'user1@example.com'
+  },
+  {
+    name: 'user2@',
+    address: 'user2@'
+  }
+]
 ```
+
+From header [can have multiple Email addresses](https://serverfault.com/a/554615) theoretically. But Gmailpush assumes that From header has a single Email address.
 
 ### getMessagesWithoutAttachment(options)
 

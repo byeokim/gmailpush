@@ -1,6 +1,6 @@
 {
   "name": "gmailpush",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Gmail API push notification handler",
   "keywords": [
     "gmail",
