@@ -21,7 +21,6 @@ Gmail API
 
 Google Cloud Pub/Sub
 
-- Ownership-validated domain ([how to validate](https://cloud.google.com/pubsub/docs/push#domain_ownership_validation))
 - Pub/Sub topic and subscription ([how to create](https://developers.google.com/gmail/api/guides/push#initial_cloud_pubsub_setup)) with push endpoint URL being set ([how to set](https://cloud.google.com/pubsub/docs/admin#change_pull_push))
 
 ## Installation
