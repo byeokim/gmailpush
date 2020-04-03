@@ -75,7 +75,7 @@ app.post(
   (req, res) => {
     // Acknowledge Gmail push notification webhook
     res.sendStatus(200);
-    
+
     // Get Email address contained in the push notification
     const email = gmailpush.getEmailAddress(req.body);
 
@@ -180,7 +180,7 @@ File path for storing `emailAddress`, `prevHistoryId` and `watchExpiration`.
 
 - `prevHistoryId`: Gmail API's push notification messages are not *real* messages but contain `historyId` which is the latest history id as of the time they are sent. To retrieve real messages, one needs to request for [history](https://developers.google.com/gmail/api/v1/reference/users/history/list) of changes to the user's mailbox since a certain history id. But `historyId` in the push notification message cannot be used for that certain history id because it is the latest one after which no changes have been made. So Gmailpush stores `historyId` from the push notification message for later use when next push notification message is received. Similarly the first push notification since installing Gmailpush could not be turned into messages but an empty array because the history id used for the first `getMessages()` is the latest one.
 
-- `watchExpiration`: Google Cloud Pub/Sub API requires calling `watch()` [at least every 7 days](https://developers.google.com/gmail/api/guides/push#renewing_mailbox_watch). Otherwise push notification will be stopped. So Gmailpush stores watch expiration and calls `watch()` one day before expiration.
+- `watchExpiration`: Google Cloud Pub/Sub API requires calling `watch()` [at least every 7 days](https://developers.google.com/gmail/api/guides/push#renewing_mailbox_watch). Otherwise push notification will be stopped. Whenever Gmailpush is initialized, it calls `watch()` to extend expiration for 7 days. And Gmailpush stores watch expiration so that schedulers like [node-schedule](https://github.com/node-schedule/node-schedule) can use it to call `watch()` before expiration.
 
 Methods like `getMessages()`, `getMessagesWithoutAttachment()` and `getNewMessage` will automatically create a file using `prevHistoryIdFilePath` if the file doesn't exist.
 
