@@ -269,7 +269,7 @@ Gmail API OAuth2 [access token](https://developers.google.com/gmail/api/auth/web
 }
 ```
 
-##### historyTypes `array of strings`
+##### historyTypes `string[]`
 
 Specifies which types of change to [history](https://developers.google.com/gmail/api/v1/reference/users/history/list) this method should consider. There are four types of change.
 
@@ -280,24 +280,24 @@ Specifies which types of change to [history](https://developers.google.com/gmail
 
 Elements in `historyTypes` will be OR-ed. Default is `['messageAdded', 'messageDeleted', 'labelAdded', 'labelRemoved']`.
 
-##### addedLabelIds `array of strings`
+##### addedLabelIds `string[]`
 
 Used with `labelAdded` history type to specify which added label ids to monitor. Elements will be OR-ed. If not provided, Gmailpush won't filter by `addedLabelIds`. User-generated labels have label ids which don't match their label names. To get label id for user-generated label, use `getLabels()`.
 
-##### removedLabelIds `array of strings`
+##### removedLabelIds `string[]`
 
 Used with `labelRemoved` history type to specify which removed label ids to monitor. Elements will be OR-ed. If not provided, Gmailpush won't filter by `removedLabelIds`. User-generated labels have label ids which don't match their label names. To get label id for user-generated label, use `getLabels()`.
 
-##### withLabelIds `array of strings`
+##### withLabelIds `string[]`
 
 Specifies which label ids should be included in `labelIds` of messages this method returns. Elements will be OR-ed. If not provided, Gmailpush won't filter by `withLabelIds`. `withLabelIds` would filter out any messages with `messageDeleted` type of history because they don't have `labelIds`. User-generated labels have label ids which don't match their label names. To get label id for user-generated label, use `getLabels()`. `withLabelIds` and `withoutLabelIds` cannot contain the same label id.
 
 
-##### withoutLabelIds `array of strings`
+##### withoutLabelIds `string[]`
 
 Specifies which label ids should *not* be included in `labelIds` of messages this method returns. Elements will be OR-ed. If not provided, Gmailpush won't filter by `withoutLabelIds`. `withoutLabelIds` would not filter out messages with `messageDeleted` type of history because they don't have `labelIds` to be filtered. User-generated labels have label ids which don't match their label names. To get label id for user-generated label, use `getLabels()`. `withLabelIds` and `withoutLabelIds` cannot contain the same label id.
 
-#### Return `array of objects || []`
+#### Return `object[]`
 
 An array of message objects. If there is no message objects that satisfy criteria set by options, an empty array will be returned.
 
@@ -364,7 +364,7 @@ const messages = await gmailpush.getMessagesWithoutAttachment({
 
 Same as those of `getMessages()`.
 
-#### Return `array of objects || []`
+#### Return `object[]`
 
 Same as that of `getMessages()` except that elements of `attachments` don't have `data`.
 
@@ -428,7 +428,7 @@ Same as that of `getMessages()`.
 
 Same as that of `getMessages()`.
 
-#### Return `object || null`
+#### Return `object | null`
 
 Message object which is the first element of array returned by `getMessages()`. Gmailpush assumes that the array is either one-element or empty array. If there is no message object that satisfies criteria set by options, `null` will be returned.
 
@@ -474,7 +474,7 @@ Same as that of `getMessages()`.
 
 Same as that of `getMessages()`.
 
-#### Return `array of objects`
+#### Return `object[]`
 
 Array of [`label`](https://developers.google.com/gmail/api/v1/reference/users/labels) objects.
 
