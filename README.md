@@ -307,7 +307,7 @@ If `prevHistoryId` for a user doesn't exist in `gmailpush_history.json`, calling
 
 If the messages have attachments, data of the attachments is automatically fetched and appended as [Buffer](https://nodejs.org/api/buffer.html) instance. Alternatively you can use `getMessagesWithoutAttachment()` which returns messages without attachment data.
 
-For `messageDeleted` type of history, because messages would have been deleted before requested, return value for those messages would have no material properties and look like this:
+For messages that would have been deleted before requested, return value for those messages would have no material properties and look like this:
 
 ```js
 {
