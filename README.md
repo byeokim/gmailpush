@@ -313,7 +313,7 @@ For messages that would have been deleted before requested, return value for tho
 {
   id: 'fedcba9876543210',
   historyType: 'messageDeleted',
-  notFound: true, // Indicates that Gmail API has returned "Not Found" error
+  notFound: true, // Indicates that Gmail API has returned "Not Found" or "Requested entity was not found." error
   attachments: [] // Exists only for internal purpose
 }
 ```
